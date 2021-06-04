@@ -1,11 +1,19 @@
+package com.example.gpstest
+import android.Manifest
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import com.example.gpstest.MainActivity
+import com.example.gpstest.R
 import com.google.android.gms.location.*
 
-class LocationService : Service() {
+
+public class LocationService : Service() {
     companion object {
         const val CHANNEL_ID = "777"
     }
@@ -26,20 +34,21 @@ class LocationService : Service() {
                 for (location in locationResult.locations){
                     updatedCount++
                     Log.d(this.javaClass.name, "[${updatedCount}] ${location.latitude} , ${location.longitude}")
+
                 }
             }
         }
 
-    val openIntent = Intent(this, MainActivity::class.java).let {
+        val openIntent = Intent(this, MainActivity::class.java).let {
             PendingIntent.getActivity(this, 0, it, 0)
         }
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("位置情報テスト")
-            .setContentText("位置情報を取得しています...")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(openIntent)
-            .build()
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle("位置情報テスト")
+                .setContentText("位置情報を取得しています...")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(openIntent)
+                .build()
 
         startForeground(9999, notification)
 
@@ -66,10 +75,27 @@ class LocationService : Service() {
 
     private fun startLocationUpdates() {
         val locationRequest = createLocationRequest() ?: return
+        if (ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
         fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            null)
+                locationRequest,
+                locationCallback,
+                null)
     }
 
     private fun stopLocationUpdates() {
